@@ -36,11 +36,11 @@ This document tracks the modifications made to the original Moon Rider codebase 
 *   **`package.json`**:
     *   Updated `build` and `start` scripts to include `NODE_OPTIONS=--openssl-legacy-provider`. This resolves the `ERR_OSSL_EVP_UNSUPPORTED` error by enabling the legacy OpenSSL provider required by the project's Webpack 4 configuration.
 
-## 5. UI Cleanup
-**Goal**: Remove outdated notices, subscription forms, and the old logo.
+## 7. Desktop Input Support
+**Goal**: Enable physical keyboard typing in the browser version for search.
 
-*   **`index.html`**:
-    *   Removed the "v3.0: Update to new beatmap format..." notification banner.
-    *   Removed the "Get Updates on Our Upcoming VR Projects!" email subscription form.
-*   **`src/templates/intro.html`**:
-    *   Removed the `#mainLogo` entity (the "Moon Rider" logo) that appeared above the start button.
+*   **`src/components/keyboard-input.js`**:
+    *   Created a new component that listens for global `keydown` events.
+    *   Forwards key presses (characters and Backspace) to the `super-keyboard` component if it is visible.
+*   **`src/scene.html`**:
+    *   Added the `keyboard-input` component to the `<a-scene>` to ensure it's active globally.

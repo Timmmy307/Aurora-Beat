@@ -31,6 +31,7 @@
   {% endif %}
   leaderboard="apiKey: {{ firekey }}; authDomain: {{ firestore }}.firebaseapp.com; databaseURL: https://{{ firestore }}.firebaseio.com; projectId: {{ firestore }}; storageBucket: {{ firestore }}.appspot.com; messagingSenderId: 172125624222"
   loading-screen="backgroundColor: #000"
+  keyboard-input
   pool__beat-arrow-blue="mixin: arrowBlueBeat; size: 30; container: #beatContainer; dynamic: true"
   pool__beat-arrow-red="mixin: arrowRedBeat; size: 30; container: #beatContainer; dynamic: true"
   pool__beat-dot-blue="mixin: dotBlueBeat; size: 30; container: #beatContainer; dynamic: true"
@@ -131,7 +132,14 @@
     {% endfor %}
 
     <!-- Player. -->
-    <a-entity id="cameraRig">
+    <a-entity id="cameraRig" bind__out-of-bounds-warning="isPlaying: isPlaying">
+      <a-entity
+        id="outOfBoundsText"
+        mixin="font"
+        text="align: center; color: #FF0000; width: 3; value: OUT OF BOUNDS\n\nPlease step back to the center.\nHold Meta/Menu button to recenter."
+        position="0 1.6 -1.5"
+        visible="false"
+        render-order="menutext"></a-entity>
       <a-entity
         id="camera"
         bind__wasd-controls="enabled: !inVr"
