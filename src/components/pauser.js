@@ -23,7 +23,11 @@ AFRAME.registerComponent('pauser', {
     });
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') { this.pauseGame(); }
+      if (document.visibilityState === 'hidden') {
+        this.pauseGame();
+      } else {
+        this.el.sceneEl.emit('gamemenuresume', null, false);
+      }
     });
   },
 
