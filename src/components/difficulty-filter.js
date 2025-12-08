@@ -1,7 +1,9 @@
 AFRAME.registerComponent('difficulty-filter', {
   events: {
     click: function (evt) {
-      this.el.sceneEl.emit('difficultyfilter', evt.target.parentNode.dataset.difficultyFilter);
+      const item = evt.target.closest('.difficultyFilterOption');
+      if (!item) { return; }
+      this.el.sceneEl.emit('difficultyfilter', item.dataset.difficultyFilter);
     }
   }
 });

@@ -27,6 +27,7 @@ AFRAME.registerComponent('menu-mode', {
   init: function () {
     this.el.addEventListener('click', evt => {
       const item = evt.target.closest('[data-mode]');
+      if (!item) { return; }
       const mode = item.dataset.mode;
       const name = item.dataset.name;
       this.el.sceneEl.emit('gamemode', mode, false);

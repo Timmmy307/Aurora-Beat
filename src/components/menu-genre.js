@@ -1,7 +1,9 @@
 AFRAME.registerComponent('menu-genre', {
   init: function () {
     this.el.addEventListener('click', evt => {
-      this.el.sceneEl.emit('genreselect', evt.target.closest('.genre').dataset.bindForKey);
+      const item = evt.target.closest('.genre');
+      if (!item) { return; }
+      this.el.sceneEl.emit('genreselect', item.dataset.bindForKey);
     });
   }
 });

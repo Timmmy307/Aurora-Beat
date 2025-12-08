@@ -14,9 +14,11 @@ AFRAME.registerComponent('menu-difficulty-select', {
 
   events: {
     click: function (evt) {
+      const item = evt.target.closest('.difficultyOption');
+      if (!item) { return; }
       this.el.sceneEl.emit(
         'menudifficultyselect',
-        evt.target.closest('.difficultyOption').dataset.difficulty,
+        item.dataset.difficulty,
         false);
     }
   }

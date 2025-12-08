@@ -870,6 +870,8 @@ AFRAME.registerState({
       !state.optionsMenuOpen &&
       !state.isSearching;
 
+    state.isMenuVisible = state.menuActive && state.gameMode !== 'multiplayer';
+
     state.score.active =
       state.gameMode !== 'ride' &&
       state.inVR &&

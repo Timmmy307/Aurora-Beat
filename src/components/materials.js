@@ -678,7 +678,9 @@ AFRAME.registerComponent('materials-color-menu', {
 
   events: {
     mouseenter: function (evt) {
-      this.text.setAttribute('text', 'value', evt.target.dataset.colorName);
+      const item = evt.target.closest('[data-color-name]');
+      if (!item) { return; }
+      this.text.setAttribute('text', 'value', item.dataset.colorName);
     },
 
     mouseleave: function (evt) {
@@ -686,8 +688,10 @@ AFRAME.registerComponent('materials-color-menu', {
     },
 
     click: function (evt) {
-      this.el.sceneEl.systems.materials.setColorScheme(evt.target.dataset.colorScheme);
-      this.el.sceneEl.emit('colorschemechange', evt.target.dataset.colorScheme, false);
+      const item = evt.target.closest('[data-color-scheme]');
+      if (!item) { return; }
+      this.el.sceneEl.systems.materials.setColorScheme(item.dataset.colorScheme);
+      this.el.sceneEl.emit('colorschemechange', item.dataset.colorScheme, false);
     }
   }
 });
