@@ -334,7 +334,8 @@ AFRAME.registerComponent('beat', {
           components: {
             haptics__beat: { pulse: () => {} },
             blade: { strokeDirectionVector: new THREE.Vector3(0, -1, 0), strokeSpeed: 10 },
-            punch: { speed: 10 }
+            punch: { speed: 10 },
+            trail: { pulse: () => {} }
           },
           dataset: { hand: 'right' }
         };

@@ -93,7 +93,7 @@ AFRAME.registerComponent('multiplayer', {
     this.menuEl.appendChild(title);
 
     // Create Classic Button (only for VR)
-    this.classicButton = this.createButton('Create Classic Room', 0.35, () => {
+    this.classicButton = this.createButton('Create Classic Room', 0.45, () => {
         if (!this.socket) this.connect();
         if (this.socket) {
             this.isHost = true;
@@ -102,7 +102,7 @@ AFRAME.registerComponent('multiplayer', {
     });
 
     // Create Punch Button (only for VR)
-    this.punchButton = this.createButton('Create Punch Room', 0.2, () => {
+    this.punchButton = this.createButton('Create Punch Room', 0.30, () => {
         if (!this.socket) this.connect();
         if (this.socket) {
             this.isHost = true;
@@ -111,7 +111,7 @@ AFRAME.registerComponent('multiplayer', {
     });
     
     // Create Touch Room Button (for browser/non-VR)
-    this.touchButton = this.createButton('Create Touch Room', 0.05, () => {
+    this.touchButton = this.createButton('Create Touch Room', 0.15, () => {
         if (!this.socket) this.connect();
         if (this.socket) {
             this.isHost = true;
@@ -120,12 +120,12 @@ AFRAME.registerComponent('multiplayer', {
     });
 
     // Join Button - shows keyboard
-    this.createButton('Join Room', -0.1, () => {
+    this.createButton('Join Room', 0.0, () => {
         this.showJoinKeyboard();
     });
     
     // Avatar Customization Button
-    this.avatarButton = this.createButton('Customize Avatar', -0.25, () => {
+    this.avatarButton = this.createButton('Customize Avatar', -0.15, () => {
         this.showAvatarCustomizer();
     });
     
@@ -133,7 +133,7 @@ AFRAME.registerComponent('multiplayer', {
     this.readyButton = document.createElement('a-entity');
     this.readyButton.setAttribute('visible', false);
     this.readyButton.setAttribute('mixin', 'bigMenuButton');
-    this.readyButton.setAttribute('position', '0 -0.4 0.01');
+    this.readyButton.setAttribute('position', '0 -0.30 0.01');
     this.readyButton.setAttribute('raycastable', '');
     const readyText = document.createElement('a-entity');
     readyText.setAttribute('mixin', 'font');
@@ -158,7 +158,7 @@ AFRAME.registerComponent('multiplayer', {
         width: 3,
         color: '#FFFF00'
     });
-    this.roomCodeText.setAttribute('position', '0 -0.55 0.01');
+    this.roomCodeText.setAttribute('position', '0 -0.45 0.01');
     this.menuEl.appendChild(this.roomCodeText);
     
     // Status text (countdown, waiting for players, etc.)
@@ -170,7 +170,7 @@ AFRAME.registerComponent('multiplayer', {
         width: 3,
         color: '#00FF00'
     });
-    this.statusText.setAttribute('position', '0 -0.67 0.01');
+    this.statusText.setAttribute('position', '0 -0.55 0.01');
     this.menuEl.appendChild(this.statusText);
     
     // Players list
@@ -182,7 +182,7 @@ AFRAME.registerComponent('multiplayer', {
         width: 2.5,
         color: '#AAAAAA'
     });
-    this.playersListText.setAttribute('position', '0 -0.80 0.01');
+    this.playersListText.setAttribute('position', '0 -0.65 0.01');
     this.menuEl.appendChild(this.playersListText);
 
     this.el.sceneEl.appendChild(this.menuEl);
