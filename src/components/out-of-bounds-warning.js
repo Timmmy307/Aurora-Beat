@@ -2,7 +2,7 @@ AFRAME.registerComponent('out-of-bounds-warning', {
   schema: {
     enabled: {default: true},
     isPlaying: {default: false},
-    threshold: {default: 1.3} // Meters from center
+    threshold: {default: 0.5} // Meters from center (approx half a step)
   },
 
   init: function () {

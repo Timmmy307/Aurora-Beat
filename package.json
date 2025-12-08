@@ -9,7 +9,7 @@
     "lint:fix": "semistandard --fix",
     "predeploy": "cross-env NODE_ENV=production npm run build && shx mkdir -p .ghpages && cp -r index.html assets build vendor CNAME .ghpages",
     "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --host 0.0.0.0 --progress --colors --hot-only --inline --port 3000",
-    "start": "npm run build && node server/multiplayer.js"
+    "start": "node server/multiplayer.js"
   },
   "dependencies": {
     "@babel/cli": "^7.17.0",

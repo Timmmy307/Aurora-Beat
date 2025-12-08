@@ -134,7 +134,7 @@
     {% endfor %}
 
     <!-- Player. -->
-    <a-entity id="cameraRig" bind__out-of-bounds-warning="isPlaying: isPlaying">
+    <a-entity id="cameraRig" bind__out-of-bounds-warning="isPlaying: isPlaying; enabled: outOfBoundsWarningEnabled">
       <a-entity
         id="outOfBoundsText"
         mixin="font"
