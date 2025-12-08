@@ -289,13 +289,9 @@ AFRAME.registerComponent('beat-generator', {
       color = undefined;
     }
 
-    if (data.has3DOFVR &&
-      data.gameMode !== 'viewer' &&
-      data.gameMode !== 'ride' &&
-      data.gameMode !== 'touch' &&
-      color === 'red') {
-      return;
-    }
+    // Previously red blocks were skipped for 3DOF VR. In touch mode we still
+    // want all blocks visible, and even on 3DOF devices it's better to keep
+    // generating them so users are not missing half the chart.
 
     if (AFRAME.utils.getUrlParameter('dot') || data.gameMode === 'punch' || data.gameMode === 'touch') { type = 'dot'; }
 
