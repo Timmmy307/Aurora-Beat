@@ -292,6 +292,7 @@ AFRAME.registerComponent('beat-generator', {
     if (data.has3DOFVR &&
       data.gameMode !== 'viewer' &&
       data.gameMode !== 'ride' &&
+      data.gameMode !== 'touch' &&
       color === 'red') {
       return;
     }
