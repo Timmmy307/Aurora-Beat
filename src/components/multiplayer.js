@@ -4,35 +4,40 @@ AFRAME.registerComponent('multiplayer', {
   schema: {
     enabled: { default: false },
     gameMode: { default: '' },
+    hasVR: { default: false },
     score: { default: 0 },
     combo: { default: 0 },
     serverUrl: { default: 'http://localhost:3000' } // Default local dev
   },
 
   init: function () {
-    this.otherPlayers = {};
-    this.tick = AFRAME.utils.throttleTick(this.tick, 50, this); // 20 updates/sec
-    this.isHost = false;
-    this.playersReady = {};
-    this.allReady = false;
-    this.currentRoomCode = null;
-    
-    // Bind methods (stored as instance properties for proper cleanup)
-    this.onConnect = this.onConnect.bind(this);
-    this.onRoomJoined = this.onRoomJoined.bind(this);
-    this.onNewPlayer = this.onNewPlayer.bind(this);
-    this.onPlayerMoved = this.onPlayerMoved.bind(this);
-    this.onPlayerScoreUpdated = this.onPlayerScoreUpdated.bind(this);
-    this.onPlayerDisconnected = this.onPlayerDisconnected.bind(this);
-    this.onError = this.onError.bind(this);
-    this.onSongSelected = this.onSongSelected.bind(this);
-    this.onPlayerReady = this.onPlayerReady.bind(this);
-    this.onCountdown = this.onCountdown.bind(this);
-    this.onStartSong = this.onStartSong.bind(this);
-    this.onKeyboardInput = this.onKeyboardInput.bind(this);
-    this.onHostSongSelect = this.onHostSongSelect.bind(this);
-    
-    this.createMenu();
+    try {
+      this.otherPlayers = {};
+      this.tick = AFRAME.utils.throttleTick(this.tick, 50, this); // 20 updates/sec
+      this.isHost = false;
+      this.playersReady = {};
+      this.allReady = false;
+      this.currentRoomCode = null;
+      
+      // Bind methods (stored as instance properties for proper cleanup)
+      this.onConnect = this.onConnect.bind(this);
+      this.onRoomJoined = this.onRoomJoined.bind(this);
+      this.onNewPlayer = this.onNewPlayer.bind(this);
+      this.onPlayerMoved = this.onPlayerMoved.bind(this);
+      this.onPlayerScoreUpdated = this.onPlayerScoreUpdated.bind(this);
+      this.onPlayerDisconnected = this.onPlayerDisconnected.bind(this);
+      this.onError = this.onError.bind(this);
+      this.onSongSelected = this.onSongSelected.bind(this);
+      this.onPlayerReady = this.onPlayerReady.bind(this);
+      this.onCountdown = this.onCountdown.bind(this);
+      this.onStartSong = this.onStartSong.bind(this);
+      this.onKeyboardInput = this.onKeyboardInput.bind(this);
+      this.onHostSongSelect = this.onHostSongSelect.bind(this);
+      
+      this.createMenu();
+    } catch (e) {
+      console.error('Multiplayer init failed:', e);
+    }
   },
   
   remove: function () {
@@ -42,12 +47,23 @@ AFRAME.registerComponent('multiplayer', {
     // Remove event listener for host song selection
     this.el.sceneEl.removeEventListener('menuchallengeselect', this.onHostSongSelect);
     
+    // Remove avatar customizer event listeners
+    if (this.onAvatarSaved) {
+      this.el.sceneEl.removeEventListener('avatarsaved', this.onAvatarSaved);
+    }
+    if (this.onAvatarCustomizerClosed) {
+      this.el.sceneEl.removeEventListener('avatarcustomizerclosed', this.onAvatarCustomizerClosed);
+    }
+    
     // Remove menu elements
     if (this.menuEl && this.menuEl.parentNode) {
       this.menuEl.parentNode.removeChild(this.menuEl);
     }
     if (this.keyboardContainer && this.keyboardContainer.parentNode) {
       this.keyboardContainer.parentNode.removeChild(this.keyboardContainer);
+    }
+    if (this.avatarCustomizerEl && this.avatarCustomizerEl.parentNode) {
+      this.avatarCustomizerEl.parentNode.removeChild(this.avatarCustomizerEl);
     }
   },
 
@@ -57,9 +73,9 @@ AFRAME.registerComponent('multiplayer', {
     this.menuEl.setAttribute('visible', false);
     this.menuEl.setAttribute('position', '0 1.5 -1');
     
-    // Background
+    // Background - increased height for avatar button
     const bg = document.createElement('a-entity');
-    bg.setAttribute('geometry', 'primitive: plane; width: 1.5; height: 1.4');
+    bg.setAttribute('geometry', 'primitive: plane; width: 1.5; height: 1.6');
     bg.setAttribute('material', 'color: #222; opacity: 0.9');
     this.menuEl.appendChild(bg);
 
@@ -73,21 +89,32 @@ AFRAME.registerComponent('multiplayer', {
     title.setAttribute('position', '0 0.55 0.01');
     this.menuEl.appendChild(title);
 
-    // Create Classic Button
-    this.createButton('Create Classic Room', 0.35, () => {
+    // Create Classic Button (only for VR)
+    this.classicButton = this.createButton('Create Classic Room', 0.35, () => {
         this.isHost = true;
-        this.socket.emit('createRoom', { mode: 'classic' });
+        this.socket.emit('createRoom', { mode: 'classic', avatar: this.getLocalAvatar() });
     });
 
-    // Create Punch Button
-    this.createButton('Create Punch Room', 0.2, () => {
+    // Create Punch Button (only for VR)
+    this.punchButton = this.createButton('Create Punch Room', 0.2, () => {
         this.isHost = true;
-        this.socket.emit('createRoom', { mode: 'punch' });
+        this.socket.emit('createRoom', { mode: 'punch', avatar: this.getLocalAvatar() });
+    });
+    
+    // Create Touch Room Button (for browser/non-VR)
+    this.touchButton = this.createButton('Create Touch Room', 0.05, () => {
+        this.isHost = true;
+        this.socket.emit('createRoom', { mode: 'touch', avatar: this.getLocalAvatar() });
     });
 
     // Join Button - shows keyboard
-    this.createButton('Join Room', 0.05, () => {
+    this.createButton('Join Room', -0.1, () => {
         this.showJoinKeyboard();
+    });
+    
+    // Avatar Customization Button
+    this.avatarButton = this.createButton('Customize Avatar', -0.25, () => {
+        this.showAvatarCustomizer();
     });
     
     // Ready Button (hidden until in room)
@@ -95,7 +122,7 @@ AFRAME.registerComponent('multiplayer', {
     this.readyButton.setAttribute('visible', false);
     this.readyButton.setAttribute('geometry', 'primitive: plane; width: 1.2; height: 0.12');
     this.readyButton.setAttribute('material', 'color: #228822');
-    this.readyButton.setAttribute('position', '0 -0.1 0.01');
+    this.readyButton.setAttribute('position', '0 -0.4 0.01');
     this.readyButton.classList.add('raycastable');
     const readyText = document.createElement('a-entity');
     readyText.setAttribute('text', { value: 'READY', align: 'center', width: 2 });
@@ -120,7 +147,7 @@ AFRAME.registerComponent('multiplayer', {
         width: 3,
         color: '#FFFF00'
     });
-    this.roomCodeText.setAttribute('position', '0 -0.25 0.01');
+    this.roomCodeText.setAttribute('position', '0 -0.55 0.01');
     this.menuEl.appendChild(this.roomCodeText);
     
     // Status text (countdown, waiting for players, etc.)
@@ -131,7 +158,7 @@ AFRAME.registerComponent('multiplayer', {
         width: 3,
         color: '#00FF00'
     });
-    this.statusText.setAttribute('position', '0 -0.4 0.01');
+    this.statusText.setAttribute('position', '0 -0.67 0.01');
     this.menuEl.appendChild(this.statusText);
     
     // Players list
@@ -142,7 +169,7 @@ AFRAME.registerComponent('multiplayer', {
         width: 2.5,
         color: '#AAAAAA'
     });
-    this.playersListText.setAttribute('position', '0 -0.55 0.01');
+    this.playersListText.setAttribute('position', '0 -0.80 0.01');
     this.menuEl.appendChild(this.playersListText);
 
     this.el.sceneEl.appendChild(this.menuEl);
@@ -223,11 +250,83 @@ AFRAME.registerComponent('multiplayer', {
     this.menuEl.setAttribute('visible', true);
   },
   
+  showAvatarCustomizer: function() {
+    // Create avatar customizer if it doesn't exist
+    if (!this.avatarCustomizerEl) {
+      this.createAvatarCustomizer();
+    }
+    this.menuEl.setAttribute('visible', false);
+    this.avatarCustomizerEl.setAttribute('visible', true);
+  },
+  
+  hideAvatarCustomizer: function() {
+    if (this.avatarCustomizerEl) {
+      this.avatarCustomizerEl.setAttribute('visible', false);
+    }
+    this.menuEl.setAttribute('visible', true);
+  },
+  
+  createAvatarCustomizer: function() {
+    this.avatarCustomizerEl = document.createElement('a-entity');
+    this.avatarCustomizerEl.setAttribute('visible', false);
+    this.avatarCustomizerEl.setAttribute('position', '0 0 0');
+    this.avatarCustomizerEl.setAttribute('avatar-customizer', '');
+    
+    // Listen for customizer events on the scene (avatar-customizer emits to scene)
+    this.onAvatarSaved = (evt) => {
+      this.currentAvatar = evt.detail;
+      this.hideAvatarCustomizer();
+      // Send avatar update to server if connected
+      if (this.socket && this.currentRoomCode) {
+        this.socket.emit('avatarUpdate', this.currentAvatar);
+      }
+    };
+    
+    this.onAvatarCustomizerClosed = (evt) => {
+      this.hideAvatarCustomizer();
+    };
+    
+    this.el.sceneEl.addEventListener('avatarsaved', this.onAvatarSaved);
+    this.el.sceneEl.addEventListener('avatarcustomizerclosed', this.onAvatarCustomizerClosed);
+    
+    this.el.sceneEl.appendChild(this.avatarCustomizerEl);
+  },
+  
+  getLocalAvatar: function() {
+    // Return the current avatar settings or load from localStorage
+    if (this.currentAvatar) return this.currentAvatar;
+    
+    const saved = localStorage.getItem('aurora-beat-avatar');
+    if (saved) {
+      try {
+        this.currentAvatar = JSON.parse(saved);
+        return this.currentAvatar;
+      } catch (e) {
+        console.warn('Failed to parse saved avatar:', e);
+      }
+    }
+    
+    // Return default avatar
+    return {
+      skinTone: 'medium',
+      hairStyle: 'short',
+      hairColor: 'brown',
+      accessory: 'none',
+      bodyColor: '#4444FF'
+    };
+  },
+  
   onKeyboardInput: function(evt) {
     const code = evt.detail.value;
     if (code && code.length > 0) {
         this.isHost = false;
-        this.socket.emit('joinRoom', code.toUpperCase());
+        // Send both room code and player's mode for compatibility check
+        const playerMode = this.data.hasVR ? 'classic' : 'touch';
+        this.socket.emit('joinRoom', {
+            roomCode: code.toUpperCase(),
+            playerMode: playerMode,
+            avatar: this.getLocalAvatar()
+        });
         this.hideJoinKeyboard();
     }
   },
@@ -249,11 +348,17 @@ AFRAME.registerComponent('multiplayer', {
     btn.addEventListener('click', callback);
     
     this.menuEl.appendChild(btn);
+    return btn;
   },
 
   update: function (oldData) {
     const isMultiplayer = this.data.gameMode === 'multiplayer';
     const wasMultiplayer = oldData.gameMode === 'multiplayer';
+
+    // Update button visibility based on VR status
+    if (this.data.hasVR !== oldData.hasVR || isMultiplayer !== wasMultiplayer) {
+      this.updateButtonVisibility();
+    }
 
     if (isMultiplayer && !wasMultiplayer) {
       this.connect();
@@ -280,6 +385,20 @@ AFRAME.registerComponent('multiplayer', {
                 combo: this.data.combo
             });
         }
+    }
+  },
+  
+  updateButtonVisibility: function() {
+    // For non-VR (browser/touch) users: only show touch room creation
+    // For VR users: show classic and punch room creation
+    if (this.classicButton) {
+      this.classicButton.setAttribute('visible', this.data.hasVR);
+    }
+    if (this.punchButton) {
+      this.punchButton.setAttribute('visible', this.data.hasVR);
+    }
+    if (this.touchButton) {
+      this.touchButton.setAttribute('visible', !this.data.hasVR);
     }
   },
 
@@ -440,7 +559,19 @@ AFRAME.registerComponent('multiplayer', {
 
   onError: function(data) {
       console.error('Multiplayer Error:', data);
-      alert(data.message); // Simple alert for now
+      // Show error in status text instead of alert
+      if (this.statusText) {
+          this.statusText.setAttribute('text', 'value', data.message || 'An error occurred');
+          this.statusText.setAttribute('text', 'color', '#FF4444');
+      }
+      // Reset ready button if visible
+      if (this.readyButton && this.readyButton.getAttribute('visible')) {
+          this.readyButton.setAttribute('material', 'color', '#228822');
+          const readyTextEl = this.readyButton.querySelector('a-entity');
+          if (readyTextEl) {
+              readyTextEl.setAttribute('text', 'value', 'READY');
+          }
+      }
   },
 
   onCurrentPlayers: function (players) {
@@ -495,37 +626,18 @@ AFRAME.registerComponent('multiplayer', {
     const playerEl = document.createElement('a-entity');
     playerEl.setAttribute('id', 'player-' + playerData.id);
     
-    // Head
-    const head = document.createElement('a-entity');
-    head.setAttribute('geometry', 'primitive: box; width: 0.25; height: 0.25; depth: 0.25');
-    head.setAttribute('material', 'color: #FF0000'); // Red for other players
-    playerEl.appendChild(head);
-
-    // Score Text
-    const scoreText = document.createElement('a-entity');
-    scoreText.classList.add('score-text');
-    scoreText.setAttribute('text', {
-        value: 'Score: 0\nCombo: 0',
-        align: 'center',
-        color: '#FFF',
-        width: 2
+    // Use player-avatar component if available and player has avatar data
+    const avatarData = playerData.avatar || {};
+    playerEl.setAttribute('player-avatar', {
+      playerId: playerData.id,
+      skinTone: avatarData.skinTone || 'medium',
+      hairStyle: avatarData.hairStyle || 'short',
+      hairColor: avatarData.hairColor || 'brown',
+      accessory: avatarData.accessory || 'none',
+      bodyColor: avatarData.bodyColor || '#FF4444',
+      isLocal: false,
+      showSabers: this.data.hasVR
     });
-    scoreText.setAttribute('position', '0 0.5 0');
-    scoreText.setAttribute('rotation', '0 180 0'); // Face the local player (approx)
-    playerEl.appendChild(scoreText);
-
-    // Hands
-    const leftHand = document.createElement('a-entity');
-    leftHand.classList.add('left-hand');
-    leftHand.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
-    leftHand.setAttribute('material', 'color: #0000FF');
-    playerEl.appendChild(leftHand);
-
-    const rightHand = document.createElement('a-entity');
-    rightHand.classList.add('right-hand');
-    rightHand.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
-    rightHand.setAttribute('material', 'color: #0000FF');
-    playerEl.appendChild(rightHand);
 
     this.el.sceneEl.appendChild(playerEl);
     this.otherPlayers[playerData.id] = playerEl;

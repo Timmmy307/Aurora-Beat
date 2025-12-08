@@ -3,9 +3,10 @@ const COLORS = require('../constants/colors.js');
 const iconPositions = {
   classicvr: -0.6,
   punchvr: 0.87,
-  ride2d: 0.87,
+  ride2d: 0.15,
   ridevr: 0.15,
-  viewer2d: 0.15,
+  viewer2d: -0.6,
+  touch2d: 0.87,
   multiplayervr: -1.35
 };
 
@@ -15,6 +16,7 @@ const modeMap = {
   ride2d: 'ride',
   ridevr: 'ride',
   viewer2d: 'viewer',
+  touch2d: 'touch',
   multiplayervr: 'multiplayer'
 };
 
@@ -43,7 +45,7 @@ AFRAME.registerComponent('menu-mode', {
       this.setModeOption(localStorage.getItem('gameMode') || 'punchvr');
       this.el.sceneEl.emit('gamemode', modeMap[localStorage.getItem('gameMode') || 'punchvr']);
     } else {
-      this.setModeOption('ride2d');
+      this.setModeOption('touch2d');
     }
   },
 

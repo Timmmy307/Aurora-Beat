@@ -22,6 +22,22 @@ function generateRoomCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
+// Helper to check if modes are compatible
+// Touch mode is for web/browser users, classic/punch are for VR users
+function areModesCompatible(roomMode, playerMode) {
+  const webModes = ['touch'];
+  const vrModes = ['classic', 'punch'];
+  
+  // If no player mode specified, allow (legacy support)
+  if (!playerMode) return true;
+  
+  // Check if both are web modes or both are VR modes
+  const roomIsWeb = webModes.includes(roomMode);
+  const playerIsWeb = webModes.includes(playerMode);
+  
+  return roomIsWeb === playerIsWeb;
+}
+
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
@@ -37,19 +53,41 @@ io.on('connection', (socket) => {
       readyPlayers: []
     };
     
-    joinRoom(socket, roomCode);
+    joinRoom(socket, roomCode, mode);
   });
 
-  socket.on('joinRoom', (roomCode) => {
-    roomCode = roomCode.toUpperCase();
-    if (rooms[roomCode]) {
-      joinRoom(socket, roomCode);
+  socket.on('joinRoom', (data) => {
+    // Support both old format (just roomCode string) and new format (object with roomCode and playerMode)
+    let roomCode, playerMode;
+    if (typeof data === 'string') {
+      roomCode = data.toUpperCase();
+      playerMode = null;
     } else {
-      socket.emit('error', { message: 'Room not found' });
+      roomCode = (data.roomCode || '').toUpperCase();
+      playerMode = data.playerMode;
     }
+    
+    if (!rooms[roomCode]) {
+      socket.emit('error', { message: 'Room not found' });
+      return;
+    }
+    
+    const room = rooms[roomCode];
+    
+    // Check mode compatibility
+    if (!areModesCompatible(room.mode, playerMode)) {
+      const roomType = ['touch'].includes(room.mode) ? 'browser/touch' : 'VR';
+      const playerType = ['touch'].includes(playerMode) ? 'browser/touch' : 'VR';
+      socket.emit('error', { 
+        message: `Cannot join: This is a ${roomType} room. You are using ${playerType} mode.`
+      });
+      return;
+    }
+    
+    joinRoom(socket, roomCode, playerMode);
   });
 
-  function joinRoom(socket, roomCode) {
+  function joinRoom(socket, roomCode, playerMode) {
     const room = rooms[roomCode];
     
     // Initialize player

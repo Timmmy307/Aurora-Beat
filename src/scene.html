@@ -33,6 +33,10 @@
   loading-screen="backgroundColor: #000"
   keyboard-input
   vr-focus-restore
+  touch-beat="enabled: false"
+  bind__touch-beat="enabled: (gameMode === 'touch' || (gameMode === 'multiplayer' && !hasVR)) && isPlaying"
+  touch-cursor="enabled: false"
+  bind__touch-cursor="enabled: (gameMode === 'touch' || (gameMode === 'multiplayer' && !hasVR)) && isPlaying"
   multiplayer="enabled: false"
   bind__multiplayer="gameMode: gameMode; score: score.score; combo: score.combo"
   pool__beat-arrow-blue="mixin: arrowBlueBeat; size: 30; container: #beatContainer; dynamic: true"

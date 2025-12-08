@@ -27,6 +27,7 @@ const CLASSIC = 'classic';
 const DOT = 'dot';
 const PUNCH = 'punch';
 const RIDE = 'ride';
+const TOUCH = 'touch';
 
 const CUT_DIRECTION_VECTORS = {
   up: new THREE.Vector3(0, 1, 0),
@@ -63,12 +64,13 @@ const ROTATIONS = {
 const SIZES = {
   [CLASSIC]: 0.48,
   [PUNCH]: 0.35,
-  [RIDE]: 0.4
+  [RIDE]: 0.4,
+  [TOUCH]: 0.45
 };
 
 AFRAME.registerComponent('beat-system', {
   schema: {
-    gameMode: { default: 'classic', oneOf: ['classic', 'punch', 'ride'] },
+    gameMode: { default: 'classic', oneOf: ['classic', 'punch', 'ride', 'touch'] },
     hasVR: { default: false },
     inVR: { default: false },
     isLoading: { default: false },
@@ -115,7 +117,7 @@ AFRAME.registerComponent('beat-system', {
   },
 
   tick: function (t, dt) {
-    if (!this.data.isPlaying || this.data.gameMode === RIDE) { return; }
+    if (!this.data.isPlaying || this.data.gameMode === RIDE || this.data.gameMode === TOUCH) { return; }
 
     const beatsToCheck = this.beatsToCheck;
     const curve = this.supercurve.curve;
@@ -342,6 +344,8 @@ AFRAME.registerComponent('beat', {
       return;
     }
 
+    if (!this.data.isPlaying || this.data.gameMode === RIDE || this.data.gameMode === TOUCH) { return; }
+
     // Warmup animation.
     if (this.warmupTime < WARMUP_TIME) {
       const progress = elasticEasing(this.warmupTime / WARMUP_TIME);
@@ -469,10 +473,14 @@ AFRAME.registerComponent('beat', {
     if (this.data.type === MINE) {
       brokenPoolName = 'pool__beat-broken-mine';
     } else {
-      const mode = this.beatSystem.data.gameMode === CLASSIC ? 'beat' : PUNCH;
-      brokenPoolName = `pool__${mode}-broken-${this.data.color}`;
-      if (this.data.type === DOT) {
-        brokenPoolName += '-dot';
+      if (this.beatSystem.data.gameMode === TOUCH) {
+        brokenPoolName = `pool__beat-broken-${this.data.color}-dot`;
+      } else {
+        const mode = this.beatSystem.data.gameMode === CLASSIC ? 'beat' : PUNCH;
+        brokenPoolName = `pool__${mode}-broken-${this.data.color}`;
+        if (this.data.type === DOT) {
+          brokenPoolName += '-dot';
+        }
       }
     }
 
@@ -541,6 +549,13 @@ AFRAME.registerComponent('beat', {
     if (this.beatSystem.data.gameMode === PUNCH) {
       this.destroyBeat(weaponEl, true);
       this.calculateScorePunch(weaponEl);
+    }
+
+    // Do touch-related checks.
+    if (this.beatSystem.data.gameMode === TOUCH) {
+      this.destroyBeat(weaponEl, true);
+      this.score(100, 100);
+      return;
     }
   },
 
