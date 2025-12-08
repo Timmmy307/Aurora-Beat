@@ -131,7 +131,14 @@
     {% endfor %}
 
     <!-- Player. -->
-    <a-entity id="cameraRig">
+    <a-entity id="cameraRig" bind__out-of-bounds-warning="isPlaying: isPlaying; enabled: outOfBoundsWarningEnabled">
+      <a-entity
+        id="outOfBoundsText"
+        mixin="font"
+        text="align: center; color: #FF0000; width: 3; value: OUT OF BOUNDS\n\nPlease step back to the center.\nHold Meta/Menu button to recenter."
+        position="0 1.6 -1.5"
+        visible="false"
+        render-order="menutext"></a-entity>
       <a-entity
         id="camera"
         bind__wasd-controls="enabled: !inVr"
