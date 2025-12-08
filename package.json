@@ -72,7 +72,7 @@
     "webpack-cli": "^3.2.0",
     "webpack-glsl-loader": "^1.0.1",
     "webpack-sources": "1.0.1",
-    "zip-loader": "github:ngokevin/ziploader#xhrdist"
+    "zip-loader": "git+https://github.com/ngokevin/ziploader.git#xhrdist"
   },
   "overrides": {
     "aframe-render-order-component": {
@@ -101,7 +101,6 @@
     ]
   },
   "engines": {
-    "node": "<=12.18.3",
-    "npm": "<=6.14.6"
+    "node": ">=18.0.0"
   }
 }
