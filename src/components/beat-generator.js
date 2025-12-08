@@ -275,6 +275,7 @@ AFRAME.registerComponent('beat-generator', {
 
   generateBeat: function (noteInfo, index) {
     const data = this.data;
+    console.log('[beat-generator] generateBeat called, gameMode:', data.gameMode);
 
     if (DEBUG_MINES) { noteInfo._type = 3; }
 
@@ -296,6 +297,7 @@ AFRAME.registerComponent('beat-generator', {
     if (AFRAME.utils.getUrlParameter('dot') || data.gameMode === 'punch' || data.gameMode === 'touch') { type = 'dot'; }
 
     const beatEl = this.requestBeat(type, color);
+    console.log('[beat-generator] requestBeat result:', beatEl, 'type:', type, 'color:', color);
     if (!beatEl) { return; }
 
     // Entity was just created.
@@ -309,6 +311,7 @@ AFRAME.registerComponent('beat-generator', {
 
   setupBeat: function (beatEl, noteInfo) {
     const data = this.data;
+    console.log('[beat-generator] setupBeat called, beatEl:', beatEl, 'gameMode:', data.gameMode);
 
     // Apply sword offset. Blocks arrive on beat in front of the user.
     const cutDirection = this.orientationsHumanized[noteInfo._cutDirection];

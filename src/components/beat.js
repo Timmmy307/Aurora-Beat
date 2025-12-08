@@ -222,7 +222,8 @@ AFRAME.registerComponent('beat-system', {
     const BOTTOM_HEIGHTS = {
       [CLASSIC]: 0.95,
       [RIDE]: 0.95,
-      [PUNCH]: 1.20
+      [PUNCH]: 1.20,
+      [TOUCH]: 0.95
     };
 
     const BOTTOM_HEIGHT_MIN = 0.4;
