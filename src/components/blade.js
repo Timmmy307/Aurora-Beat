@@ -33,7 +33,7 @@ AFRAME.registerComponent('blade', {
   },
 
   update: function (oldData) {
-    if (!oldData.enabled && this.data.enabled) {
+    if ((!oldData || !oldData.enabled) && this.data.enabled) {
       this.bladeEl.emit('drawblade');
     }
   },

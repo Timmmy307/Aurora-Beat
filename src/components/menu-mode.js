@@ -7,7 +7,8 @@ const iconPositions = {
   ridevr: 0.15,
   viewer2d: -0.6,
   touch2d: 0.87,
-  multiplayervr: -1.35
+  multiplayervr: -1.35,
+  multiplayer2d: -1.35
 };
 
 const modeMap = {
@@ -17,7 +18,8 @@ const modeMap = {
   ridevr: 'ride',
   viewer2d: 'viewer',
   touch2d: 'touch',
-  multiplayervr: 'multiplayer'
+  multiplayervr: 'multiplayer',
+  multiplayer2d: 'multiplayer'
 };
 
 AFRAME.registerComponent('menu-mode', {

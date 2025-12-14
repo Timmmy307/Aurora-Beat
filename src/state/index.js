@@ -934,6 +934,7 @@ AFRAME.registerState({
 
     state.mainMenuActive =
       state.menuActive &&
+      state.gameMode !== 'multiplayer' &&
       !state.genreMenuOpen &&
       !state.difficultyFilterMenuOpen &&
       !state.playlistMenuOpen &&

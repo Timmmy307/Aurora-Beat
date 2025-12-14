@@ -1,0 +1,129 @@
+<!-- Multiplayer Menu -->
+<a-entity
+  id="multiplayerMenu"
+  bind__visible="menuActive && gameMode === 'multiplayer'"
+  position="0 1.5 -2.5">
+
+  <!-- Background -->
+  <a-entity
+    geometry="primitive: plane; width: 1.6; height: 1.8"
+    material="shader: flat; color: #111; opacity: 0.95"
+    position="0 0 -0.02">
+  </a-entity>
+
+  <!-- Title -->
+  <a-entity
+    mixin="font"
+    text="value: MULTIPLAYER LOBBY; align: center; width: 3; color: #FFF"
+    position="0 0.70 0.01">
+  </a-entity>
+
+  <!-- Create Touch Room Button (for non-VR) -->
+  <a-entity
+    id="mpTouchButton"
+    bind__visible-raycastable="menuActive && gameMode === 'multiplayer' && !hasVR"
+    geometry="primitive: plane; width: 1.15; height: 0.18"
+    material="shader: flat; color: #333; opacity: 0.9"
+    position="0 0.45 0"
+    proxy-event="event: click; to: a-scene; as: mpcreatetouchroom"
+    animation__mouseenter="property: material.color; to: #555; startEvents: mouseenter; dur: 100"
+    animation__mouseleave="property: material.color; to: #333; startEvents: mouseleave; dur: 100"
+    play-sound__hover="event: mouseenter; sound: #hoverSound; volume: 0.1">
+    <a-entity mixin="font" text="value: Create Touch Room; align: center; width: 2; color: #FFF" position="0 0 0.01"></a-entity>
+  </a-entity>
+
+  <!-- Create Classic Room Button (for VR) -->
+  <a-entity
+    id="mpClassicButton"
+    bind__visible-raycastable="menuActive && gameMode === 'multiplayer' && hasVR"
+    geometry="primitive: plane; width: 1.15; height: 0.18"
+    material="shader: flat; color: #333; opacity: 0.9"
+    position="0 0.45 0"
+    proxy-event="event: click; to: a-scene; as: mpcreateclassicroom"
+    animation__mouseenter="property: material.color; to: #555; startEvents: mouseenter; dur: 100"
+    animation__mouseleave="property: material.color; to: #333; startEvents: mouseleave; dur: 100"
+    play-sound__hover="event: mouseenter; sound: #hoverSound; volume: 0.1">
+    <a-entity mixin="font" text="value: Create Classic Room; align: center; width: 2; color: #FFF" position="0 0 0.01"></a-entity>
+  </a-entity>
+
+  <!-- Create Punch Room Button (for VR) -->
+  <a-entity
+    id="mpPunchButton"
+    bind__visible-raycastable="menuActive && gameMode === 'multiplayer' && hasVR"
+    geometry="primitive: plane; width: 1.15; height: 0.18"
+    material="shader: flat; color: #333; opacity: 0.9"
+    position="0 0.25 0"
+    proxy-event="event: click; to: a-scene; as: mpcreatepunchroom"
+    animation__mouseenter="property: material.color; to: #555; startEvents: mouseenter; dur: 100"
+    animation__mouseleave="property: material.color; to: #333; startEvents: mouseleave; dur: 100"
+    play-sound__hover="event: mouseenter; sound: #hoverSound; volume: 0.1">
+    <a-entity mixin="font" text="value: Create Punch Room; align: center; width: 2; color: #FFF" position="0 0 0.01"></a-entity>
+  </a-entity>
+
+  <!-- Join Room Button -->
+  <a-entity
+    id="mpJoinButton"
+    bind__visible-raycastable="menuActive && gameMode === 'multiplayer'"
+    geometry="primitive: plane; width: 1.15; height: 0.18"
+    material="shader: flat; color: #333; opacity: 0.9"
+    position="0 0.05 0"
+    proxy-event="event: click; to: a-scene; as: mpjoinroom"
+    animation__mouseenter="property: material.color; to: #555; startEvents: mouseenter; dur: 100"
+    animation__mouseleave="property: material.color; to: #333; startEvents: mouseleave; dur: 100"
+    play-sound__hover="event: mouseenter; sound: #hoverSound; volume: 0.1">
+    <a-entity mixin="font" text="value: Join Room; align: center; width: 2; color: #FFF" position="0 0 0.01"></a-entity>
+  </a-entity>
+
+  <!-- Customize Avatar Button -->
+  <a-entity
+    id="mpAvatarButton"
+    bind__visible-raycastable="menuActive && gameMode === 'multiplayer'"
+    geometry="primitive: plane; width: 1.15; height: 0.18"
+    material="shader: flat; color: #333; opacity: 0.9"
+    position="0 -0.15 0"
+    proxy-event="event: click; to: a-scene; as: mpcustomizeavatar"
+    animation__mouseenter="property: material.color; to: #555; startEvents: mouseenter; dur: 100"
+    animation__mouseleave="property: material.color; to: #333; startEvents: mouseleave; dur: 100"
+    play-sound__hover="event: mouseenter; sound: #hoverSound; volume: 0.1">
+    <a-entity mixin="font" text="value: Customize Avatar; align: center; width: 2; color: #FFF" position="0 0 0.01"></a-entity>
+  </a-entity>
+
+  <!-- Back Button -->
+  <a-entity
+    id="mpBackButton"
+    bind__visible-raycastable="menuActive && gameMode === 'multiplayer'"
+    geometry="primitive: plane; width: 1.15; height: 0.18"
+    material="shader: flat; color: #444; opacity: 0.9"
+    position="0 -0.35 0"
+    proxy-event="event: click; to: a-scene; as: mpback"
+    animation__mouseenter="property: material.color; to: #666; startEvents: mouseenter; dur: 100"
+    animation__mouseleave="property: material.color; to: #444; startEvents: mouseleave; dur: 100"
+    play-sound__hover="event: mouseenter; sound: #hoverSound; volume: 0.1">
+    <a-entity mixin="font" text="value: Back; align: center; width: 2; color: #FFF" position="0 0 0.01"></a-entity>
+  </a-entity>
+
+  <!-- Room Code Display -->
+  <a-entity
+    id="mpRoomCode"
+    mixin="font"
+    text="value: ; align: center; width: 3; color: #FFFF00"
+    position="0 -0.55 0.01">
+  </a-entity>
+
+  <!-- Status Text -->
+  <a-entity
+    id="mpStatus"
+    mixin="font"
+    text="value: ; align: center; width: 3; color: #00FF00"
+    position="0 -0.70 0.01">
+  </a-entity>
+
+  <!-- Players List -->
+  <a-entity
+    id="mpPlayersList"
+    mixin="font"
+    text="value: ; align: center; width: 2.5; color: #AAAAAA"
+    position="0 -0.85 0.01">
+  </a-entity>
+
+</a-entity>

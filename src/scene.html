@@ -38,7 +38,7 @@
   touch-cursor="enabled: false"
   bind__touch-cursor="enabled: (gameMode === 'touch' || (gameMode === 'multiplayer' && !hasVR)) && isPlaying"
   multiplayer="enabled: false"
-  bind__multiplayer="gameMode: gameMode; score: score.score; combo: score.combo"
+  bind__multiplayer="gameMode: gameMode; hasVR: hasVR; score: score.score; combo: score.combo"
   pool__beat-arrow-blue="mixin: arrowBlueBeat; size: 30; container: #beatContainer; dynamic: true"
   pool__beat-arrow-red="mixin: arrowRedBeat; size: 30; container: #beatContainer; dynamic: true"
   pool__beat-dot-blue="mixin: dotBlueBeat; size: 30; container: #beatContainer; dynamic: true"
@@ -94,6 +94,7 @@
   <require path="templates/victory.html"></require>
   <require path="templates/leaderboard.html"></require>
   <require path="templates/news.html"></require>
+  <require path="templates/multiplayerMenu.html"></require>
 
   <a-mixin
     id="cursorMesh"

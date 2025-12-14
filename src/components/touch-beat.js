@@ -138,15 +138,19 @@ AFRAME.registerComponent('touch-beat', {
           // Create a mock weapon element for the hit
           const mockWeaponEl = {
             components: {
-              haptics__beat: { pulse: function() {} },
-              blade: { strokeDirectionVector: new THREE.Vector3(0, -1, 0), strokeSpeed: 10 },
-              punch: { speed: 10 },
-              trail: { pulse: function() {} }
+              haptics__beat: { pulse: function() {}, data: { enabled: false } },
+              blade: { strokeDirectionVector: new THREE.Vector3(0, -1, 0), strokeSpeed: 10, data: { enabled: false } },
+              punch: { speed: 10, data: { enabled: false } },
+              trail: { pulse: function() {}, data: { enabled: false } }
             },
             dataset: { hand: 'right' }
           };
           
-          beatComponent.onHit(mockWeaponEl);
+          try {
+            beatComponent.onHit(mockWeaponEl);
+          } catch (err) {
+            console.error('[touch-beat] Error in onHit:', err);
+          }
           
           // Show hit effect
           this.showHitEffect(intersects[0].point);

@@ -81,7 +81,7 @@ AFRAME.registerComponent('trail', {
 
   update: function (oldData) {
     this.mesh.visible = this.data.enabled;
-    if (!oldData.enabled && this.data.enabled) {
+    if ((!oldData || !oldData.enabled) && this.data.enabled) {
       this.enabledTime = this.el.sceneEl.time;
     }
 

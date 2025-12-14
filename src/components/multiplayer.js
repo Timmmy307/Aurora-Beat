@@ -34,10 +34,66 @@ AFRAME.registerComponent('multiplayer', {
       this.onKeyboardInput = this.onKeyboardInput.bind(this);
       this.onHostSongSelect = this.onHostSongSelect.bind(this);
       
-      this.createMenu();
+      // Set up event listeners for menu buttons (from template)
+      this.setupMenuEventListeners();
+      
+      // Create the join keyboard (hidden by default)
+      this.createJoinKeyboard();
     } catch (e) {
       console.error('Multiplayer init failed:', e);
     }
+  },
+  
+  setupMenuEventListeners: function() {
+    const sceneEl = this.el.sceneEl;
+    
+    // Create Touch Room
+    sceneEl.addEventListener('mpcreatetouchroom', () => {
+      console.log('Creating touch room');
+      if (!this.socket) this.connect();
+      if (this.socket) {
+        this.isHost = true;
+        this.socket.emit('createRoom', { mode: 'touch', avatar: this.getLocalAvatar() });
+      }
+    });
+    
+    // Create Classic Room
+    sceneEl.addEventListener('mpcreateclassicroom', () => {
+      console.log('Creating classic room');
+      if (!this.socket) this.connect();
+      if (this.socket) {
+        this.isHost = true;
+        this.socket.emit('createRoom', { mode: 'classic', avatar: this.getLocalAvatar() });
+      }
+    });
+    
+    // Create Punch Room
+    sceneEl.addEventListener('mpcreatepunchroom', () => {
+      console.log('Creating punch room');
+      if (!this.socket) this.connect();
+      if (this.socket) {
+        this.isHost = true;
+        this.socket.emit('createRoom', { mode: 'punch', avatar: this.getLocalAvatar() });
+      }
+    });
+    
+    // Join Room
+    sceneEl.addEventListener('mpjoinroom', () => {
+      console.log('Showing join keyboard');
+      this.showJoinKeyboard();
+    });
+    
+    // Customize Avatar
+    sceneEl.addEventListener('mpcustomizeavatar', () => {
+      console.log('Showing avatar customizer');
+      this.showAvatarCustomizer();
+    });
+    
+    // Back
+    sceneEl.addEventListener('mpback', () => {
+      console.log('Going back to mode selection');
+      sceneEl.emit('gamemode', 'touch', false);
+    });
   },
   
   remove: function () {
@@ -55,10 +111,7 @@ AFRAME.registerComponent('multiplayer', {
       this.el.sceneEl.removeEventListener('avatarcustomizerclosed', this.onAvatarCustomizerClosed);
     }
     
-    // Remove menu elements
-    if (this.menuEl && this.menuEl.parentNode) {
-      this.menuEl.parentNode.removeChild(this.menuEl);
-    }
+    // Remove keyboard container
     if (this.keyboardContainer && this.keyboardContainer.parentNode) {
       this.keyboardContainer.parentNode.removeChild(this.keyboardContainer);
     }
@@ -67,134 +120,17 @@ AFRAME.registerComponent('multiplayer', {
     }
   },
 
-  createMenu: function() {
-    // Create a simple menu for Room selection
-    this.menuEl = document.createElement('a-entity');
-    this.menuEl.setAttribute('visible', false);
-    this.menuEl.setAttribute('position', '0 1.5 -2.5');
-    
-    // Background - increased height for avatar button
-    const bg = document.createElement('a-entity');
-    bg.setAttribute('geometry', 'primitive: plane; width: 1.5; height: 1.6');
-    bg.setAttribute('material', 'shader: panelShader; brightness: 0.1; ratio: 1; borderWidth: 0.002');
-    bg.setAttribute('position', '0 0 -0.01'); // Slightly behind to not block raycasts
-    this.menuEl.appendChild(bg);
-
-    // Title
-    const title = document.createElement('a-entity');
-    title.setAttribute('mixin', 'font');
-    title.setAttribute('text', {
-        value: 'MULTIPLAYER LOBBY',
-        align: 'center',
-        width: 3,
-        color: '#FFF'
-    });
-    title.setAttribute('position', '0 0.55 0.01');
-    this.menuEl.appendChild(title);
-
-    // Create Classic Button (only for VR)
-    this.classicButton = this.createButton('Create Classic Room', 0.45, () => {
-        if (!this.socket) this.connect();
-        if (this.socket) {
-            this.isHost = true;
-            this.socket.emit('createRoom', { mode: 'classic', avatar: this.getLocalAvatar() });
-        }
-    });
-
-    // Create Punch Button (only for VR)
-    this.punchButton = this.createButton('Create Punch Room', 0.30, () => {
-        if (!this.socket) this.connect();
-        if (this.socket) {
-            this.isHost = true;
-            this.socket.emit('createRoom', { mode: 'punch', avatar: this.getLocalAvatar() });
-        }
-    });
-    
-    // Create Touch Room Button (for browser/non-VR)
-    this.touchButton = this.createButton('Create Touch Room', 0.15, () => {
-        if (!this.socket) this.connect();
-        if (this.socket) {
-            this.isHost = true;
-            this.socket.emit('createRoom', { mode: 'touch', avatar: this.getLocalAvatar() });
-        }
-    });
-
-    // Join Button - shows keyboard
-    this.createButton('Join Room', 0.0, () => {
-        this.showJoinKeyboard();
-    });
-    
-    // Avatar Customization Button
-    this.avatarButton = this.createButton('Customize Avatar', -0.15, () => {
-        this.showAvatarCustomizer();
-    });
-    
-    // Ready Button (hidden until in room)
-    this.readyButton = document.createElement('a-entity');
-    this.readyButton.setAttribute('visible', false);
-    this.readyButton.setAttribute('mixin', 'bigMenuButton');
-    this.readyButton.setAttribute('position', '0 -0.30 0.01');
-    this.readyButton.setAttribute('raycastable', '');
-    const readyText = document.createElement('a-entity');
-    readyText.setAttribute('mixin', 'font');
-    readyText.setAttribute('text', { value: 'READY', align: 'center', width: 2, color: '#FFF' });
-    readyText.setAttribute('position', '0 0 0.01');
-    this.readyButton.appendChild(readyText);
-    this.readyButton.addEventListener('click', () => {
-        if (this.socket && this.currentRoomCode) {
-            this.socket.emit('playerReady');
-            this.readyButton.setAttribute('material', 'color', '#115511');
-            readyText.setAttribute('text', 'value', 'WAITING...');
-        }
-    });
-    this.menuEl.appendChild(this.readyButton);
-    
-    // Room Code Display
-    this.roomCodeText = document.createElement('a-entity');
-    this.roomCodeText.setAttribute('mixin', 'font');
-    this.roomCodeText.setAttribute('text', {
-        value: '',
-        align: 'center',
-        width: 3,
-        color: '#FFFF00'
-    });
-    this.roomCodeText.setAttribute('position', '0 -0.45 0.01');
-    this.menuEl.appendChild(this.roomCodeText);
-    
-    // Status text (countdown, waiting for players, etc.)
-    this.statusText = document.createElement('a-entity');
-    this.statusText.setAttribute('mixin', 'font');
-    this.statusText.setAttribute('text', {
-        value: '',
-        align: 'center',
-        width: 3,
-        color: '#00FF00'
-    });
-    this.statusText.setAttribute('position', '0 -0.55 0.01');
-    this.menuEl.appendChild(this.statusText);
-    
-    // Players list
-    this.playersListText = document.createElement('a-entity');
-    this.playersListText.setAttribute('mixin', 'font');
-    this.playersListText.setAttribute('text', {
-        value: '',
-        align: 'center',
-        width: 2.5,
-        color: '#AAAAAA'
-    });
-    this.playersListText.setAttribute('position', '0 -0.65 0.01');
-    this.menuEl.appendChild(this.playersListText);
-
-    this.el.sceneEl.appendChild(this.menuEl);
-    
-    // Create the join keyboard (hidden by default)
-    this.createJoinKeyboard();
-  },
-  
   createJoinKeyboard: function() {
     this.keyboardContainer = document.createElement('a-entity');
     this.keyboardContainer.setAttribute('visible', false);
-    this.keyboardContainer.setAttribute('position', '0 1.2 -0.8');
+    this.keyboardContainer.setAttribute('position', '0 1.5 -2');
+    
+    // Background
+    const kbBg = document.createElement('a-entity');
+    kbBg.setAttribute('geometry', 'primitive: plane; width: 1.4; height: 0.8');
+    kbBg.setAttribute('material', 'shader: flat; color: #111; opacity: 0.95');
+    kbBg.setAttribute('position', '0 0 -0.01');
+    this.keyboardContainer.appendChild(kbBg);
     
     // Keyboard background/label
     const kbLabel = document.createElement('a-entity');
@@ -205,62 +141,134 @@ AFRAME.registerComponent('multiplayer', {
         width: 2,
         color: '#FFFFFF'
     });
-    kbLabel.setAttribute('position', '0 0.35 0');
+    kbLabel.setAttribute('position', '0 0.30 0');
     this.keyboardContainer.appendChild(kbLabel);
     
-    // Keyboard entity
-    this.roomCodeKeyboard = document.createElement('a-entity');
-    this.roomCodeKeyboard.setAttribute('super-keyboard', {
-        label: '',
-        inputColor: '#fff',
-        labelColor: '#aaa',
-        width: 1.2,
-        imagePath: 'assets/img/keyboard',
-        font: 'assets/fonts/Viga-Regular.json',
+    // Room code input display
+    this.roomCodeInput = document.createElement('a-entity');
+    this.roomCodeInput.setAttribute('mixin', 'font');
+    this.roomCodeInput.setAttribute('text', {
+        value: '____',
         align: 'center',
-        model: 'superkeyboard',
-        keyColor: '#fff',
-        injectToRaycasterObjects: true,
-        filters: 'allupper',
-        keyHoverColor: '#fff',
-        maxLength: 4
+        width: 3,
+        color: '#FFFF00'
     });
-    this.roomCodeKeyboard.setAttribute('raycastable', '');
-    this.roomCodeKeyboard.classList.add('keyboardRaycastable');
-    this.roomCodeKeyboard.addEventListener('superkeyboardinput', this.onKeyboardInput);
-    this.roomCodeKeyboard.addEventListener('superkeyboarddismiss', () => {
-        this.hideJoinKeyboard();
+    this.roomCodeInput.setAttribute('position', '0 0.15 0');
+    this.keyboardContainer.appendChild(this.roomCodeInput);
+    
+    // Simple number/letter buttons for room code entry
+    this.currentCode = '';
+    const chars = ['A','B','C','D','E','F','G','H','1','2','3','4','5','6','7','8','9','0'];
+    const cols = 6;
+    chars.forEach((char, i) => {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const x = (col - 2.5) * 0.18;
+      const y = -row * 0.15;
+      
+      const charBtn = document.createElement('a-entity');
+      charBtn.setAttribute('geometry', 'primitive: plane; width: 0.15; height: 0.12');
+      charBtn.setAttribute('material', 'shader: flat; color: #333');
+      charBtn.setAttribute('position', `${x} ${y} 0`);
+      charBtn.setAttribute('raycastable', '');
+      charBtn.setAttribute('class', 'raycastable');
+      
+      const charText = document.createElement('a-entity');
+      charText.setAttribute('mixin', 'font');
+      charText.setAttribute('text', { value: char, align: 'center', width: 1.5, color: '#FFF' });
+      charText.setAttribute('position', '0 0 0.01');
+      charBtn.appendChild(charText);
+      
+      charBtn.addEventListener('click', () => {
+        if (this.currentCode.length < 4) {
+          this.currentCode += char;
+          this.updateCodeDisplay();
+        }
+      });
+      charBtn.addEventListener('mouseenter', () => charBtn.setAttribute('material', 'color', '#555'));
+      charBtn.addEventListener('mouseleave', () => charBtn.setAttribute('material', 'color', '#333'));
+      
+      this.keyboardContainer.appendChild(charBtn);
     });
-    this.keyboardContainer.appendChild(this.roomCodeKeyboard);
+    
+    // Clear button
+    const clearBtn = document.createElement('a-entity');
+    clearBtn.setAttribute('geometry', 'primitive: plane; width: 0.3; height: 0.12');
+    clearBtn.setAttribute('material', 'shader: flat; color: #553333');
+    clearBtn.setAttribute('position', '-0.35 -0.45 0');
+    clearBtn.setAttribute('raycastable', '');
+    const clearText = document.createElement('a-entity');
+    clearText.setAttribute('mixin', 'font');
+    clearText.setAttribute('text', { value: 'CLEAR', align: 'center', width: 1.5, color: '#FFF' });
+    clearText.setAttribute('position', '0 0 0.01');
+    clearBtn.appendChild(clearText);
+    clearBtn.addEventListener('click', () => {
+      this.currentCode = '';
+      this.updateCodeDisplay();
+    });
+    clearBtn.addEventListener('mouseenter', () => clearBtn.setAttribute('material', 'color', '#774444'));
+    clearBtn.addEventListener('mouseleave', () => clearBtn.setAttribute('material', 'color', '#553333'));
+    this.keyboardContainer.appendChild(clearBtn);
+    
+    // Join button
+    const joinBtn = document.createElement('a-entity');
+    joinBtn.setAttribute('geometry', 'primitive: plane; width: 0.3; height: 0.12');
+    joinBtn.setAttribute('material', 'shader: flat; color: #335533');
+    joinBtn.setAttribute('position', '0.15 -0.45 0');
+    joinBtn.setAttribute('raycastable', '');
+    const joinText = document.createElement('a-entity');
+    joinText.setAttribute('mixin', 'font');
+    joinText.setAttribute('text', { value: 'JOIN', align: 'center', width: 1.5, color: '#FFF' });
+    joinText.setAttribute('position', '0 0 0.01');
+    joinBtn.appendChild(joinText);
+    joinBtn.addEventListener('click', () => {
+      if (this.currentCode.length === 4) {
+        this.onKeyboardInput({ detail: { value: this.currentCode } });
+      }
+    });
+    joinBtn.addEventListener('mouseenter', () => joinBtn.setAttribute('material', 'color', '#447744'));
+    joinBtn.addEventListener('mouseleave', () => joinBtn.setAttribute('material', 'color', '#335533'));
+    this.keyboardContainer.appendChild(joinBtn);
     
     // Cancel button
     const cancelBtn = document.createElement('a-entity');
-    cancelBtn.setAttribute('mixin', 'bigMenuButton');
-    cancelBtn.setAttribute('geometry', 'width: 0.4; height: 0.1');
-    cancelBtn.setAttribute('position', '0 -0.35 0');
+    cancelBtn.setAttribute('geometry', 'primitive: plane; width: 0.3; height: 0.12');
+    cancelBtn.setAttribute('material', 'shader: flat; color: #444');
+    cancelBtn.setAttribute('position', '0.50 -0.45 0');
     cancelBtn.setAttribute('raycastable', '');
     const cancelText = document.createElement('a-entity');
     cancelText.setAttribute('mixin', 'font');
-    cancelText.setAttribute('text', { value: 'Cancel', align: 'center', width: 1.5, color: '#FFF' });
+    cancelText.setAttribute('text', { value: 'CANCEL', align: 'center', width: 1.5, color: '#FFF' });
     cancelText.setAttribute('position', '0 0 0.01');
     cancelBtn.appendChild(cancelText);
     cancelBtn.addEventListener('click', () => this.hideJoinKeyboard());
+    cancelBtn.addEventListener('mouseenter', () => cancelBtn.setAttribute('material', 'color', '#666'));
+    cancelBtn.addEventListener('mouseleave', () => cancelBtn.setAttribute('material', 'color', '#444'));
     this.keyboardContainer.appendChild(cancelBtn);
     
     this.el.sceneEl.appendChild(this.keyboardContainer);
   },
   
+  updateCodeDisplay: function() {
+    const display = this.currentCode.padEnd(4, '_').split('').join(' ');
+    this.roomCodeInput.setAttribute('text', 'value', display);
+  },
+  
   showJoinKeyboard: function() {
-    this.menuEl.setAttribute('visible', false);
+    // Hide the template menu
+    const mpMenu = document.getElementById('multiplayerMenu');
+    if (mpMenu) mpMenu.setAttribute('visible', false);
+    
+    this.currentCode = '';
+    this.updateCodeDisplay();
     this.keyboardContainer.setAttribute('visible', true);
-    this.roomCodeKeyboard.setAttribute('super-keyboard', 'show', true);
-    this.roomCodeKeyboard.setAttribute('super-keyboard', 'value', '');
   },
   
   hideJoinKeyboard: function() {
     this.keyboardContainer.setAttribute('visible', false);
-    this.roomCodeKeyboard.setAttribute('super-keyboard', 'show', false);
-    this.menuEl.setAttribute('visible', true);
+    // Show the template menu
+    const mpMenu = document.getElementById('multiplayerMenu');
+    if (mpMenu) mpMenu.setAttribute('visible', true);
   },
   
   showAvatarCustomizer: function() {
@@ -268,7 +276,9 @@ AFRAME.registerComponent('multiplayer', {
     if (!this.avatarCustomizerEl) {
       this.createAvatarCustomizer();
     }
-    this.menuEl.setAttribute('visible', false);
+    // Hide the template menu
+    const mpMenu = document.getElementById('multiplayerMenu');
+    if (mpMenu) mpMenu.setAttribute('visible', false);
     this.avatarCustomizerEl.setAttribute('visible', true);
   },
   
@@ -276,7 +286,9 @@ AFRAME.registerComponent('multiplayer', {
     if (this.avatarCustomizerEl) {
       this.avatarCustomizerEl.setAttribute('visible', false);
     }
-    this.menuEl.setAttribute('visible', true);
+    // Show the template menu
+    const mpMenu = document.getElementById('multiplayerMenu');
+    if (mpMenu) mpMenu.setAttribute('visible', true);
   },
   
   createAvatarCustomizer: function() {
@@ -347,54 +359,25 @@ AFRAME.registerComponent('multiplayer', {
     }
   },
 
-  createButton: function(label, y, callback) {
-    const btn = document.createElement('a-entity');
-    btn.setAttribute('mixin', 'bigMenuButton');
-    btn.setAttribute('position', `0 ${y} 0.01`);
-    btn.setAttribute('raycastable', ''); // Make sure raycaster can hit it
-    btn.classList.add('raycastable'); // Add class as fallback
-    
-    const text = document.createElement('a-entity');
-    text.setAttribute('mixin', 'font');
-    text.setAttribute('text', { value: label, align: 'center', width: 2, color: '#FFF' });
-    text.setAttribute('position', '0 0 0.01');
-    btn.appendChild(text);
-
-    btn.addEventListener('click', (evt) => {
-        console.log('Button clicked:', label);
-        callback(evt);
-    });
-    
-    this.menuEl.appendChild(btn);
-    return btn;
-  },
-
   update: function (oldData) {
     try {
       const isMultiplayer = this.data.gameMode === 'multiplayer';
       const wasMultiplayer = oldData && oldData.gameMode === 'multiplayer';
       const oldEnabled = oldData && oldData.enabled;
 
-      // Update button visibility based on VR status
-      if ((oldData && this.data.hasVR !== oldData.hasVR) || isMultiplayer !== wasMultiplayer) {
-        this.updateButtonVisibility();
-      }
-
       if (isMultiplayer && !wasMultiplayer) {
+        console.log('Entering multiplayer mode');
         this.connect();
-        if (this.menuEl) this.menuEl.setAttribute('visible', true);
       } else if (!isMultiplayer && wasMultiplayer) {
+        console.log('Leaving multiplayer mode');
         this.disconnect();
-        if (this.menuEl) this.menuEl.setAttribute('visible', false);
       }
       
       // Fallback to manual enabled check if gameMode isn't used
       if (this.data.enabled && !oldEnabled && !this.socket) {
         this.connect();
-        if (this.menuEl) this.menuEl.setAttribute('visible', true);
       } else if (!this.data.enabled && oldEnabled && !isMultiplayer) {
         this.disconnect();
-        if (this.menuEl) this.menuEl.setAttribute('visible', false);
       }
 
       // Send score update if connected and score changed
@@ -408,20 +391,6 @@ AFRAME.registerComponent('multiplayer', {
       }
     } catch (e) {
       console.error('Multiplayer update failed:', e);
-    }
-  },
-  
-  updateButtonVisibility: function() {
-    // For non-VR (browser/touch) users: only show touch room creation
-    // For VR users: show classic and punch room creation
-    if (this.classicButton) {
-      this.classicButton.setAttribute('visible', this.data.hasVR);
-    }
-    if (this.punchButton) {
-      this.punchButton.setAttribute('visible', this.data.hasVR);
-    }
-    if (this.touchButton) {
-      this.touchButton.setAttribute('visible', !this.data.hasVR);
     }
   },
 
@@ -471,7 +440,9 @@ AFRAME.registerComponent('multiplayer', {
     Object.keys(this.otherPlayers).forEach(id => {
       this.removePlayer(id);
     });
-    if (this.roomCodeText) this.roomCodeText.setAttribute('text', 'value', '');
+    // Clear room code display
+    const roomCodeEl = document.getElementById('mpRoomCode');
+    if (roomCodeEl) roomCodeEl.setAttribute('text', 'value', '');
   },
 
   onConnect: function () {
@@ -481,20 +452,18 @@ AFRAME.registerComponent('multiplayer', {
   onRoomJoined: function (data) {
     console.log('Joined room:', data);
     this.currentRoomCode = data.code;
-    if (this.roomCodeText) {
-        this.roomCodeText.setAttribute('text', 'value', `Room: ${data.code} (${data.mode})`);
-    }
     
-    // Show ready button once in room
-    if (this.readyButton) {
-        this.readyButton.setAttribute('visible', true);
+    // Update room code display
+    const roomCodeEl = document.getElementById('mpRoomCode');
+    if (roomCodeEl) {
+        roomCodeEl.setAttribute('text', 'value', `Room: ${data.code} (${data.mode})`);
     }
     
     // Update status
-    if (this.statusText) {
-        const playerCount = Object.keys(data.players).length;
-        this.statusText.setAttribute('text', 'value', 
-            this.isHost ? 'You are the host. Pick a song when everyone is ready!' : 'Waiting for host to select a song...');
+    const statusEl = document.getElementById('mpStatus');
+    if (statusEl) {
+        statusEl.setAttribute('text', 'value', 
+            this.isHost ? 'You are the host. Pick a song!' : 'Waiting for host to select a song...');
     }
     
     // Update players list
@@ -516,14 +485,15 @@ AFRAME.registerComponent('multiplayer', {
   },
   
   updatePlayersList: function(players) {
-    if (!this.playersListText) return;
+    const playersListEl = document.getElementById('mpPlayersList');
+    if (!playersListEl) return;
     const playerIds = Object.keys(players);
     const playerList = playerIds.map((id, i) => {
         const isMe = this.socket && id === this.socket.id;
         const ready = this.playersReady[id] ? '✓' : '○';
         return `${ready} Player ${i + 1}${isMe ? ' (You)' : ''}`;
     }).join('\n');
-    this.playersListText.setAttribute('text', 'value', playerList);
+    playersListEl.setAttribute('text', 'value', playerList);
   },
   
   onHostSongSelect: function(evt) {
@@ -542,8 +512,9 @@ AFRAME.registerComponent('multiplayer', {
   
   onSongSelected: function(data) {
     console.log('Song selected by host:', data);
-    if (this.statusText) {
-        this.statusText.setAttribute('text', 'value', 'Song selected! Click READY to start.');
+    const statusEl = document.getElementById('mpStatus');
+    if (statusEl) {
+        statusEl.setAttribute('text', 'value', 'Song selected! Click READY to start.');
     }
     
     // Store song info for when we start
@@ -561,8 +532,9 @@ AFRAME.registerComponent('multiplayer', {
     this.playersReady[data.playerId] = true;
     
     // Update UI
-    if (this.statusText) {
-        this.statusText.setAttribute('text', 'value', `${data.readyCount}/${data.totalPlayers} players ready`);
+    const statusEl = document.getElementById('mpStatus');
+    if (statusEl) {
+        statusEl.setAttribute('text', 'value', `${data.readyCount}/${data.totalPlayers} players ready`);
     }
     
     // Update players list with ready status
@@ -571,21 +543,23 @@ AFRAME.registerComponent('multiplayer', {
   
   onCountdown: function(data) {
     console.log('Countdown:', data.count);
-    if (this.statusText) {
+    const statusEl = document.getElementById('mpStatus');
+    if (statusEl) {
         if (data.count > 0) {
-            this.statusText.setAttribute('text', 'value', `Starting in ${data.count}...`);
-            this.statusText.setAttribute('text', 'color', '#FFFF00');
+            statusEl.setAttribute('text', 'value', `Starting in ${data.count}...`);
+            statusEl.setAttribute('text', 'color', '#FFFF00');
         } else {
-            this.statusText.setAttribute('text', 'value', 'GO!');
-            this.statusText.setAttribute('text', 'color', '#00FF00');
+            statusEl.setAttribute('text', 'value', 'GO!');
+            statusEl.setAttribute('text', 'color', '#00FF00');
         }
     }
   },
   
   onStartSong: function(data) {
     console.log('Starting song!', data);
-    // Hide multiplayer menu
-    if (this.menuEl) this.menuEl.setAttribute('visible', false);
+    // Hide multiplayer menu (template-based)
+    const mpMenu = document.getElementById('multiplayerMenu');
+    if (mpMenu) mpMenu.setAttribute('visible', false);
     
     // Emit event to start the song
     this.el.sceneEl.emit('multiplayerstartgame', data, false);
@@ -593,18 +567,11 @@ AFRAME.registerComponent('multiplayer', {
 
   onError: function(data) {
       console.error('Multiplayer Error:', data);
-      // Show error in status text instead of alert
-      if (this.statusText) {
-          this.statusText.setAttribute('text', 'value', data.message || 'An error occurred');
-          this.statusText.setAttribute('text', 'color', '#FF4444');
-      }
-      // Reset ready button if visible
-      if (this.readyButton && this.readyButton.getAttribute('visible')) {
-          this.readyButton.setAttribute('material', 'color', '#228822');
-          const readyTextEl = this.readyButton.querySelector('a-entity');
-          if (readyTextEl) {
-              readyTextEl.setAttribute('text', 'value', 'READY');
-          }
+      // Show error in status text
+      const statusEl = document.getElementById('mpStatus');
+      if (statusEl) {
+          statusEl.setAttribute('text', 'value', data.message || 'An error occurred');
+          statusEl.setAttribute('text', 'color', '#FF4444');
       }
   },
 

@@ -330,17 +330,21 @@ AFRAME.registerComponent('beat', {
     // Add click listener for touch/mouse interaction
     this.onBeatClick = () => {
       if (this.beatSystem && this.beatSystem.data.gameMode === TOUCH && !this.destroyed) {
-        // Mock weaponEl for onHit
+        // Mock weaponEl for onHit with data properties to prevent errors
         const mockWeaponEl = {
           components: {
-            haptics__beat: { pulse: () => {} },
-            blade: { strokeDirectionVector: new THREE.Vector3(0, -1, 0), strokeSpeed: 10 },
-            punch: { speed: 10 },
-            trail: { pulse: () => {} }
+            haptics__beat: { pulse: () => {}, data: { enabled: false } },
+            blade: { strokeDirectionVector: new THREE.Vector3(0, -1, 0), strokeSpeed: 10, data: { enabled: false } },
+            punch: { speed: 10, data: { enabled: false } },
+            trail: { pulse: () => {}, data: { enabled: false } }
           },
           dataset: { hand: 'right' }
         };
-        this.onHit(mockWeaponEl);
+        try {
+          this.onHit(mockWeaponEl);
+        } catch (err) {
+          console.error('[beat] Error in onBeatClick onHit:', err);
+        }
       }
     };
     this.el.addEventListener('click', this.onBeatClick);

@@ -1,5 +1,11 @@
 function requireAll (req) { req.keys().forEach(req); }
 
+// Global error handler to catch and log full stack traces
+window.addEventListener('error', function(event) {
+  console.error('[Global Error]', event.message);
+  console.error('[Stack]', event.error ? event.error.stack : 'No stack available');
+});
+
 console.time = () => {
 };
 console.timeEnd = () => {
